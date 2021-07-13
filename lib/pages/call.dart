@@ -22,6 +22,7 @@ class _CallPageState extends State<CallPage> {
   RtcEngine _engine;
   Map<int, User> _userMap = new Map<int, User>();
   bool _muted = false;
+  var _height, _width;
 
   @override
   void dispose() {
@@ -70,8 +71,6 @@ class _CallPageState extends State<CallPage> {
       }, joinChannelSuccess: (channel, uid, elapsed) {
         setState(() {
           _userMap.addAll({0: User(0, false)});
-          print(
-              "User joined to the channel success ------------------- $uid---");
         });
       }, leaveChannel: (stats) {
         setState(() {
@@ -80,11 +79,9 @@ class _CallPageState extends State<CallPage> {
       }, userJoined: (uid, elapsed) {
         setState(() {
           _userMap.addAll({uid: User(uid, false)});
-          print("Remote user joined to the channel--------> ${uid}");
         });
       }, userOffline: (uid, elapsed) {
         setState(() {
-          print("User offline  to the channel--------> ${uid}");
           _userMap.remove(uid);
         });
       }, audioVolumeIndication: (info, v) {
@@ -96,16 +93,10 @@ class _CallPageState extends State<CallPage> {
                   setState(() {
                     _userMap.update(key, (value) => User(key, true));
                   });
-                  print(
-                      "----------updated user data ${_userMap[key].toString()}");
                 } else {
-                  print(
-                      "------------current speaking key in else case is ------ $key");
                   setState(() {
                     _userMap.update(key, (value) => User(key, false));
                   });
-                  print(
-                      "----------in else block user data ${_userMap[key].toString()}");
                 }
               });
             } catch (error) {
@@ -119,29 +110,30 @@ class _CallPageState extends State<CallPage> {
 
   @override
   Widget build(BuildContext context) {
+    _height = MediaQuery.of(context).size.height;
+    _width = MediaQuery.of(context).size.width;
     return Scaffold(
       appBar: AppBar(
         title: Text("Group call"),
       ),
       body: Stack(
-        children: [buildGridView(), _toolbar()],
+        children: [_buildGridVideoView(), _toolbar()],
       ),
     );
   }
 
-  GridView buildGridView() {
+  GridView _buildGridVideoView() {
     return GridView.builder(
       shrinkWrap: true,
       itemCount: _userMap.length,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          childAspectRatio: 4 / 5,
           crossAxisCount: _userMap.length % 2 == 0 ? 2 : 1),
       itemBuilder: (BuildContext context, int index) => Padding(
-        padding: const EdgeInsets.all(10.0),
+        padding: const EdgeInsets.all(8.0),
         child: Container(
           child: Container(
-              width: 120,
-              height: 200,
-              color: Colors.redAccent,
+              color: Colors.white,
               child: (_userMap.entries.elementAt(index).key == 0)
                   ? RtcLocalView.SurfaceView()
                   : RtcRemoteView.SurfaceView(
