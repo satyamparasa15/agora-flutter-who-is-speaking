@@ -1,4 +1,4 @@
-import 'package:agora_flutter_who_is_speaking/pages/index.dart';
+import 'package:agora_flutter_who_is_speaking/pages/home_page.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -15,7 +15,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: IndexPage(),
+      home: HomePage(),
     );
   }
 }

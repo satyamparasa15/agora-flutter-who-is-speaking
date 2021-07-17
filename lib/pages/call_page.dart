@@ -9,10 +9,7 @@ class CallPage extends StatefulWidget {
   /// non-modifiable channel name of the page
   final String channelName;
 
-  /// non-modifiable client role of the page
-  final ClientRole role;
-
-  const CallPage({Key key, this.channelName, this.role}) : super(key: key);
+  const CallPage({Key key, this.channelName}) : super(key: key);
 
   @override
   _CallPageState createState() => _CallPageState();
@@ -22,7 +19,6 @@ class _CallPageState extends State<CallPage> {
   RtcEngine _engine;
   Map<int, User> _userMap = new Map<int, User>();
   bool _muted = false;
-  var _height, _width;
 
   @override
   void dispose() {
@@ -58,7 +54,7 @@ class _CallPageState extends State<CallPage> {
   Future<void> _initAgoraRtcEngine() async {
     _engine = await RtcEngine.create(APP_ID);
     await _engine.setChannelProfile(ChannelProfile.Communication);
-    await _engine.setClientRole(widget.role);
+    await _engine.setClientRole(ClientRole.Broadcaster);
     await _engine.enableVideo();
     await _engine.enableAudio();
     await _engine.enableAudioVolumeIndication(600, 3, true);
@@ -110,8 +106,6 @@ class _CallPageState extends State<CallPage> {
 
   @override
   Widget build(BuildContext context) {
-    _height = MediaQuery.of(context).size.height;
-    _width = MediaQuery.of(context).size.width;
     return Scaffold(
       appBar: AppBar(
         title: Text("Group call"),
@@ -127,8 +121,8 @@ class _CallPageState extends State<CallPage> {
       shrinkWrap: true,
       itemCount: _userMap.length,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          childAspectRatio: 4 / 5,
-          crossAxisCount: _userMap.length % 2 == 0 ? 2 : 1),
+          childAspectRatio: MediaQuery.of(context).size.height / 1100,
+          crossAxisCount: 2),
       itemBuilder: (BuildContext context, int index) => Padding(
         padding: const EdgeInsets.all(8.0),
         child: Container(
@@ -154,7 +148,7 @@ class _CallPageState extends State<CallPage> {
   }
 
   Widget _toolbar() {
-    if (widget.role == ClientRole.Audience) return Container();
+    // if (widget.role == ClientRole.Audience) return Container();
     return Container(
       alignment: Alignment.bottomCenter,
       padding: const EdgeInsets.symmetric(vertical: 48),
