@@ -47,23 +47,22 @@ class _CallPageState extends State<CallPage> {
     VideoEncoderConfiguration configuration = VideoEncoderConfiguration();
     configuration.dimensions = VideoDimensions(1920, 1080);
     await _engine.setVideoEncoderConfiguration(configuration);
-    await _engine.joinChannel(Token, widget.channelName, null, 0);
+    await _engine.joinChannel(null, widget.channelName, null, 0);
   }
 
   /// Create agora sdk instance and initialize
   Future<void> _initAgoraRtcEngine() async {
     _engine = await RtcEngine.create(APP_ID);
     await _engine.setChannelProfile(ChannelProfile.Communication);
-    await _engine.setClientRole(ClientRole.Broadcaster);
     await _engine.enableVideo();
     await _engine.enableAudio();
-    await _engine.enableAudioVolumeIndication(600, 3, true);
+    await _engine.enableAudioVolumeIndication(250, 3, true);
   }
 
   void _addAgoraEventHandlers() {
     _engine.setEventHandler(
       RtcEngineEventHandler(error: (code) {
-        print("error occurred $code---------------------------");
+        print("error occurred $code");
       }, joinChannelSuccess: (channel, uid, elapsed) {
         setState(() {
           _userMap.addAll({0: User(0, false)});
@@ -82,6 +81,7 @@ class _CallPageState extends State<CallPage> {
         });
       }, audioVolumeIndication: (info, v) {
         info.forEach((element) {
+          //detecting speaking person whose volume more than 10
           if (element.volume > 10) {
             try {
               _userMap.forEach((key, value) {
@@ -96,7 +96,7 @@ class _CallPageState extends State<CallPage> {
                 }
               });
             } catch (error) {
-              print('-------${error.toString()}');
+              print('Error:${error.toString()}');
             }
           }
         });
@@ -148,7 +148,6 @@ class _CallPageState extends State<CallPage> {
   }
 
   Widget _toolbar() {
-    // if (widget.role == ClientRole.Audience) return Container();
     return Container(
       alignment: Alignment.bottomCenter,
       padding: const EdgeInsets.symmetric(vertical: 48),
