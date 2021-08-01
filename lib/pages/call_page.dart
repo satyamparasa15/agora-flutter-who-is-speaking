@@ -19,6 +19,7 @@ class _CallPageState extends State<CallPage> {
   RtcEngine _engine;
   Map<int, User> _userMap = new Map<int, User>();
   bool _muted = false;
+  int _localUid;
 
   @override
   void dispose() {
@@ -44,18 +45,15 @@ class _CallPageState extends State<CallPage> {
     }
     await _initAgoraRtcEngine();
     _addAgoraEventHandlers();
-    VideoEncoderConfiguration configuration = VideoEncoderConfiguration();
-    configuration.dimensions = VideoDimensions(1920, 1080);
-    await _engine.setVideoEncoderConfiguration(configuration);
     await _engine.joinChannel(null, widget.channelName, null, 0);
   }
 
   /// Create agora sdk instance and initialize
   Future<void> _initAgoraRtcEngine() async {
     _engine = await RtcEngine.create(APP_ID);
-    await _engine.setChannelProfile(ChannelProfile.Communication);
     await _engine.enableVideo();
-    await _engine.enableAudio();
+    await _engine.setChannelProfile(ChannelProfile.Communication);
+    // Enables the audioVolumeIndication
     await _engine.enableAudioVolumeIndication(250, 3, true);
   }
 
@@ -65,7 +63,8 @@ class _CallPageState extends State<CallPage> {
         print("error occurred $code");
       }, joinChannelSuccess: (channel, uid, elapsed) {
         setState(() {
-          _userMap.addAll({0: User(0, false)});
+          _localUid = uid;
+          _userMap.addAll({uid: User(uid, false)});
         });
       }, leaveChannel: (stats) {
         setState(() {
@@ -79,13 +78,51 @@ class _CallPageState extends State<CallPage> {
         setState(() {
           _userMap.remove(uid);
         });
-      }, audioVolumeIndication: (info, v) {
-        info.forEach((element) {
-          //detecting speaking person whose volume more than 10
-          if (element.volume > 10) {
+      },
+
+          /// Detecting active speaker by using activeSpeaker callback
+          /*
+        activeSpeaker: (uid) {
+        print("Active speaker ---------------------$uid");
+        _userMap.forEach((key, value) {
+          //Highlighting local user
+          // In this callback, the local user is represented by an uid of 0.
+          if ((_localUid.compareTo(key) == 0) && (uid == 0)) {
+            setState(() {
+              _userMap.update(key, (value) => User(key, true));
+            });
+          }
+
+          //Highlighting remote user
+          else if (key.compareTo(uid) == 0) {
+            setState(() {
+              _userMap.update(key, (value) => User(key, true));
+            });
+          } else {
+            setState(() {
+              _userMap.update(key, (value) => User(key, false));
+            });
+          }
+        });
+      },*/
+
+          /// Detecting active speaker by using audioVolumeIndication callback
+          audioVolumeIndication: (volumeInfo, v) {
+        volumeInfo.forEach((speaker) {
+          //detecting speaking person whose volume more than 5
+          if (speaker.volume > 5) {
             try {
               _userMap.forEach((key, value) {
-                if (key.compareTo(element.uid) == 0) {
+                //Highlighting local user
+                //In this callback, the local user is represented by an uid of 0.
+                if ((_localUid.compareTo(key) == 0) && (speaker.uid == 0)) {
+                  setState(() {
+                    _userMap.update(key, (value) => User(key, true));
+                  });
+                }
+
+                //Highlighting remote user
+                else if (key.compareTo(speaker.uid) == 0) {
                   setState(() {
                     _userMap.update(key, (value) => User(key, true));
                   });
@@ -128,7 +165,7 @@ class _CallPageState extends State<CallPage> {
         child: Container(
           child: Container(
               color: Colors.white,
-              child: (_userMap.entries.elementAt(index).key == 0)
+              child: (_userMap.entries.elementAt(index).key == _localUid)
                   ? RtcLocalView.SurfaceView()
                   : RtcRemoteView.SurfaceView(
                       uid: _userMap.entries.elementAt(index).key)),
