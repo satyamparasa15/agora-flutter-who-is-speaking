@@ -7,19 +7,19 @@ import 'package:flutter/material.dart';
 
 class CallPage extends StatefulWidget {
   /// non-modifiable channel name of the page
-  final String channelName;
+  final String? channelName;
 
-  const CallPage({Key key, this.channelName}) : super(key: key);
+  const CallPage({Key? key, this.channelName}) : super(key: key);
 
   @override
   _CallPageState createState() => _CallPageState();
 }
 
 class _CallPageState extends State<CallPage> {
-  RtcEngine _engine;
+  late RtcEngine _engine;
   Map<int, User> _userMap = new Map<int, User>();
   bool _muted = false;
-  int _localUid;
+  int? _localUid;
 
   @override
   void dispose() {
@@ -45,7 +45,7 @@ class _CallPageState extends State<CallPage> {
     }
     await _initAgoraRtcEngine();
     _addAgoraEventHandlers();
-    await _engine.joinChannel(null, widget.channelName, null, 0);
+    await _engine.joinChannel(null, widget.channelName ?? "", null, 0);
   }
 
   /// Create agora sdk instance and initialize
@@ -80,32 +80,6 @@ class _CallPageState extends State<CallPage> {
         });
       },
 
-          /// Detecting active speaker by using activeSpeaker callback
-          /*
-        activeSpeaker: (uid) {
-        print("Active speaker ---------------------$uid");
-        _userMap.forEach((key, value) {
-          //Highlighting local user
-          // In this callback, the local user is represented by an uid of 0.
-          if ((_localUid.compareTo(key) == 0) && (uid == 0)) {
-            setState(() {
-              _userMap.update(key, (value) => User(key, true));
-            });
-          }
-
-          //Highlighting remote user
-          else if (key.compareTo(uid) == 0) {
-            setState(() {
-              _userMap.update(key, (value) => User(key, true));
-            });
-          } else {
-            setState(() {
-              _userMap.update(key, (value) => User(key, false));
-            });
-          }
-        });
-      },*/
-
           /// Detecting active speaker by using audioVolumeIndication callback
           audioVolumeIndication: (volumeInfo, v) {
         volumeInfo.forEach((speaker) {
@@ -115,7 +89,7 @@ class _CallPageState extends State<CallPage> {
               _userMap.forEach((key, value) {
                 //Highlighting local user
                 //In this callback, the local user is represented by an uid of 0.
-                if ((_localUid.compareTo(key) == 0) && (speaker.uid == 0)) {
+                if ((_localUid?.compareTo(key) == 0) && (speaker.uid == 0)) {
                   setState(() {
                     _userMap.update(key, (value) => User(key, true));
                   });
